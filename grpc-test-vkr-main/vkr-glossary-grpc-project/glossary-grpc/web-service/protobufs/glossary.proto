@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+// Сообщение термина
+message Term {
+  int32 id = 1;
+  string term = 2;
+  string definition = 3;
+  string category = 4;
+  repeated string related_terms = 5;
+}
+
+// Запрос на получение одного термина
+message GetTermRequest {
+  int32 term_id = 1;
+}
+
+// Запрос на получение списка терминов
+message GetTermsRequest {
+  int32 page = 1;
+  int32 per_page = 2;
+  string search = 3;
+}
+
+// Ответ со списком терминов
+message GetTermsResponse {
+  repeated Term terms = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 per_page = 4;
+}
+
+// Запрос на создание термина
+message CreateTermRequest {
+  string term = 1;
+  string definition = 2;
+  string category = 3;
+  repeated string related_terms = 4;
+}
+
+// Запрос на обновление термина
+message UpdateTermRequest {
+  int32 term_id = 1;
+  string term = 2;
+  string definition = 3;
+  string category = 4;
+  repeated string related_terms = 5;
+}
+
+// Запрос на удаление термина
+message DeleteTermRequest {
+  int32 term_id = 1;
+}
+
+// Ответ на удаление термина
+message DeleteTermResponse {
+  string message = 1;
+}
+
+// Запрос на поиск терминов
+message SearchTermsRequest {
+  string query = 1;
+}
+
+// Ответ на поиск терминов
+message SearchTermsResponse {
+  repeated Term results = 1;
+  string query = 2;
+  int32 count = 3;
+}
+
+// Запрос на проверку здоровья сервиса
+message HealthCheckRequest {
+}
+
+// Ответ на проверку здоровья сервиса
+message HealthCheckResponse {
+  string status = 1;
+  string message = 2;
+}
+
+// Сервис глоссария
+service GlossaryService {
+  // Получить информацию о конкретном термине
+  rpc GetTerm (GetTermRequest) returns (Term);
+  
+  // Получить список всех терминов с пагинацией и поиском
+  rpc GetTerms (GetTermsRequest) returns (GetTermsResponse);
+  
+  // Добавить новый термина в глоссарий
+  rpc CreateTerm (CreateTermRequest) returns (Term);
+  
+  // Обновить существующий термина
+  rpc UpdateTerm (UpdateTermRequest) returns (Term);
+  
+  // Удалить термина из глоссария
+  rpc DeleteTerm (DeleteTermRequest) returns (DeleteTermResponse);
+  
+  // Поиск терминов по запросу
+  rpc SearchTerms (SearchTermsRequest) returns (SearchTermsResponse);
+  
+  // Проверка состояния API
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
+}
+

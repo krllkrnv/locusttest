@@ -1,4 +1,4 @@
-#!/home/krllkrnv/mkdocs-test/backend/venv/bin/python3
+#!/home/krllkrnv/locusttest/mindmap-vkr-main/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

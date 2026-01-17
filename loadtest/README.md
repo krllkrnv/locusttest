@@ -2,14 +2,14 @@
 
 Инструкции по проведению нагрузочного тестирования с помощью Locust.
 
-**Важно**: Согласно ТЗ, параметры нагрузки (количество пользователей, spawn rate, длительность) нужно **подобрать экспериментально**, а не использовать готовые значения. Данный документ описывает методику подбора параметров.
+**Важно**: параметры нагрузки (количество пользователей, spawn rate, длительность) подбираются **экспериментально**. Ниже приведена рабочая схема запуска и итеративного подбора с фиксацией артефактов (CSV/HTML).
 
 ## Подготовка окружения
 
 ### 1. Установка зависимостей
 
 ```bash
-cd ~/locusttest/loadtest
+cd loadtest
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -22,7 +22,11 @@ pip install -r requirements.txt
 source venv/bin/activate
 
 # Генерация protobuf файлов для gRPC клиента
-python -m grpc_tools.protoc -I ../grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service/protobufs --python_out=grpc_gen --grpc_python_out=grpc_gen ../grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service/protobufs/glossary.proto
+python -m grpc_tools.protoc \
+  -I ../grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service/protobufs \
+  --python_out=grpc_gen \
+  --grpc_python_out=grpc_gen \
+  ../grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service/protobufs/glossary.proto
 ```
 
 ## Запуск сервисов
@@ -35,18 +39,19 @@ python -m grpc_tools.protoc -I ../grpc-test-vkr-main/vkr-glossary-grpc-project/g
 
 **Терминал 1 - REST сервис:**
 ```bash
-cd ~/locusttest
+cd ..
 ./scripts/start_rest.sh
 ```
 
 **Терминал 2 - gRPC сервис:**
 ```bash
-cd ~/locusttest
+cd ..
 ./scripts/start_grpc.sh
 ```
 
 **Проверка доступности:**
 ```bash
+cd ..
 ./scripts/check_services.sh
 ```
 
@@ -55,7 +60,7 @@ cd ~/locusttest
 #### REST сервис (порт 8000)
 
 ```bash
-cd ~/locusttest/mindmap-vkr-main/backend
+cd ../mindmap-vkr-main/backend
 source venv/bin/activate
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
@@ -63,14 +68,14 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 #### gRPC сервис (порт 50052)
 
 ```bash
-cd ~/locusttest/grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service
+cd ../grpc-test-vkr-main/vkr-glossary-grpc-project/glossary-grpc/glossary-service
 source venv/bin/activate
 python glossary.py
 ```
 
 ## Методика подбора параметров нагрузки
 
-Согласно ТЗ, параметры нужно **подобрать экспериментально**. Ниже описана методика итеративного подбора.
+Параметры подбираются итеративно: старт с минимальных значений → увеличение нагрузки → фиксация метрик и артефактов → выбор “рабочей” нагрузки для сравнения.
 
 ### Общий подход
 
@@ -94,14 +99,14 @@ python glossary.py
 
 #### Используя скрипт (рекомендуется):
 ```bash
-cd ~/locusttest
+cd ..
 ./scripts/run_test.sh rest sanity 5 1 2m
 ./scripts/run_test.sh grpc sanity 5 1 2m
 ```
 
 #### Или вручную:
 ```bash
-cd ~/locusttest/loadtest
+cd loadtest
 source venv/bin/activate
 locust -f locustfile_rest.py --host http://127.0.0.1:8000 -u 5 -r 1 -t 2m --csv out/rest_sanity --html out/rest_sanity.html --headless
 
@@ -119,12 +124,12 @@ GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py -u 5 -r 1 -t 2m --csv o
 1. **Итерация 1**: Начать с 10 пользователей, spawn rate 2/сек, длительность 2-3 минуты
    ```bash
    # Используя скрипт
-   cd ~/locusttest
+   cd ..
    ./scripts/run_test.sh rest normal 10 2 3m
    ./scripts/run_test.sh grpc normal 10 2 3m
    
    # Или вручную
-   cd ~/locusttest/loadtest
+   cd loadtest
    source venv/bin/activate
    locust -f locustfile_rest.py --host http://127.0.0.1:8000 -u 10 -r 2 -t 3m --csv out/rest_normal_iter1 --html out/rest_normal_iter1.html --headless
    GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py -u 10 -r 2 -t 3m --csv out/grpc_normal_iter1 --html out/grpc_normal_iter1.html --headless
@@ -221,7 +226,7 @@ GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py -u 5 -r 1 -t 2m --csv o
 ./scripts/run_test.sh grpc stability 50 5 15m
 
 # Или вручную
-cd ~/locusttest/loadtest
+cd loadtest
 source venv/bin/activate
 locust -f locustfile_rest.py --host http://127.0.0.1:8000 -u 50 -r 5 -t 15m --csv out/rest_stability --html out/rest_stability.html --headless
 GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py -u 50 -r 5 -t 15m --csv out/grpc_stability --html out/grpc_stability.html --headless
@@ -279,7 +284,7 @@ GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py -u 50 -r 5 -t 15m --csv
 Для интерактивного запуска (с веб-интерфейсом) уберите флаг `--headless`:
 
 ```bash
-cd ~/locusttest/loadtest
+cd loadtest
 source venv/bin/activate
 
 # REST
@@ -289,5 +294,5 @@ locust -f locustfile_rest.py --host http://127.0.0.1:8000
 GRPC_TARGET=127.0.0.1:50052 locust -f locustfile_grpc.py
 ```
 
-Затем откройте в браузере: http://localhost:8089
+Затем откройте в браузере: `http://localhost:8089`
 
